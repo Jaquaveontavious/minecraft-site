@@ -7,6 +7,7 @@ declare module "next-auth" {
   interface Session {
     user: {
       discordId: string;
+      tier: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -59,14 +60,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // Persist discordId into the JWT on first sign-in
     async jwt({ token, account, profile }) {
       if (account?.provider === "discord" && profile) {
-        token.discordId = (profile as unknown as DiscordProfile).id;
+        const discordProfile = profile as unknown as DiscordProfile;
+        token.discordId = discordProfile.id;
+
+        const supabase = createServerClient();
+        const { data } = await supabase
+          .from("users")
+          .select("tier")
+          .eq("discord_id", discordProfile.id)
+          .single();
+        token.tier = data?.tier ?? "free";
       }
       return token;
     },
 
-    // Expose discordId on the client-accessible session object
     async session({ session, token }) {
       session.user.discordId = token.discordId as string;
+      session.user.tier = token.tier as string;
       return session;
     },
   },

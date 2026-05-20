@@ -42,97 +42,6 @@ function FeatureGroup({
   );
 }
 
-// ── Minecraft pixel-art style icons ──────────────────────────
-
-function SwordIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
-      {/* tip */}
-      <rect x="1" y="0" width="2" height="2" />
-      {/* blade */}
-      <rect x="2" y="2" width="2" height="2" />
-      <rect x="3" y="4" width="2" height="2" />
-      <rect x="4" y="6" width="2" height="2" />
-      {/* crossguard */}
-      <rect x="1" y="7" width="8" height="2" />
-      {/* handle */}
-      <rect x="7" y="9" width="2" height="2" />
-      <rect x="8" y="11" width="2" height="2" />
-      {/* pommel */}
-      <rect x="9" y="13" width="3" height="3" />
-    </svg>
-  );
-}
-
-function BookIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
-      {/* spine */}
-      <rect x="6" y="0" width="2" height="16" />
-      {/* left page */}
-      <rect x="1" y="1" width="5" height="14" />
-      {/* right page */}
-      <rect x="8" y="1" width="5" height="14" />
-      {/* lines on left page */}
-      <rect x="2" y="4" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="2" y="6" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="2" y="8" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="2" y="10" width="2" height="1" fill="currentColor" opacity="0.4" />
-      {/* lines on right page */}
-      <rect x="9" y="4" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="9" y="6" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="9" y="8" width="3" height="1" fill="currentColor" opacity="0.4" />
-      <rect x="9" y="10" width="2" height="1" fill="currentColor" opacity="0.4" />
-    </svg>
-  );
-}
-
-function ShieldIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
-      {/* top-left corner */}
-      <rect x="2" y="0" width="5" height="2" />
-      <rect x="0" y="2" width="2" height="4" />
-      {/* top-right corner */}
-      <rect x="9" y="0" width="5" height="2" />
-      <rect x="14" y="2" width="2" height="4" />
-      {/* body */}
-      <rect x="0" y="6" width="16" height="4" />
-      {/* taper */}
-      <rect x="1" y="10" width="14" height="2" />
-      <rect x="3" y="12" width="10" height="2" />
-      <rect x="6" y="14" width="4" height="2" />
-      {/* center stripe */}
-      <rect x="7" y="2" width="2" height="8" opacity="0.35" />
-    </svg>
-  );
-}
-
-function BarrierIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
-      {/* outer ring */}
-      <rect x="4" y="0" width="8" height="2" />
-      <rect x="0" y="4" width="2" height="8" />
-      <rect x="14" y="4" width="2" height="8" />
-      <rect x="4" y="14" width="8" height="2" />
-      <rect x="2" y="2" width="2" height="2" />
-      <rect x="12" y="2" width="2" height="2" />
-      <rect x="2" y="12" width="2" height="2" />
-      <rect x="12" y="12" width="2" height="2" />
-      {/* X */}
-      <rect x="4" y="4" width="2" height="2" />
-      <rect x="6" y="6" width="2" height="2" />
-      <rect x="8" y="8" width="2" height="2" />
-      <rect x="10" y="10" width="2" height="2" />
-      <rect x="10" y="4" width="2" height="2" />
-      <rect x="8" y="6" width="2" height="2" />
-      <rect x="6" y="8" width="2" height="2" />
-      <rect x="4" y="10" width="2" height="2" />
-    </svg>
-  );
-}
-
 // InfoCard is inlined per-card below to ensure Tailwind picks up all classes
 
 export default function Home() {
@@ -404,9 +313,11 @@ export default function Home() {
           {/* Intro */}
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="text-3xl">🧍</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/stickman.png" alt="stickman" width={48} height={48} style={{ imageRendering: "pixelated" }} />
               <h2 className="text-4xl font-bold text-white">Truly Survival</h2>
-              <span className="text-3xl">🧍</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/stickman.png" alt="stickman" width={48} height={48} style={{ imageRendering: "pixelated", transform: "scaleX(-1)" }} />
             </div>
             <p className="text-green-400 text-lg font-medium mb-6">
               Community driven Vanilla Minecraft, done right.
@@ -427,7 +338,8 @@ export default function Home() {
             <div className="rounded-xl border-2 border-amber-500 bg-[#1a1100] shadow-[0_0_50px_rgba(245,158,11,0.25)] overflow-hidden flex flex-col">
               <div className="bg-amber-900/50 px-6 py-5 flex items-center gap-4">
                 <div className="p-2.5 rounded-lg bg-amber-800/80 ring-2 ring-amber-400/60 shrink-0">
-                  <SwordIcon className="w-8 h-8 text-amber-300" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/totem.png" alt="totem" width={40} height={40} style={{ imageRendering: "pixelated" }} />
                 </div>
                 <h3 className="text-xl font-bold text-amber-300">Frequent Events</h3>
               </div>
@@ -445,7 +357,8 @@ export default function Home() {
             <div className="rounded-xl border-2 border-sky-500 bg-[#00111a] shadow-[0_0_50px_rgba(14,165,233,0.25)] overflow-hidden flex flex-col">
               <div className="bg-sky-900/50 px-6 py-5 flex items-center gap-4">
                 <div className="p-2.5 rounded-lg bg-sky-800/80 ring-2 ring-sky-400/60 shrink-0">
-                  <BookIcon className="w-8 h-8 text-sky-300" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/book.png" alt="book" width={40} height={40} style={{ imageRendering: "pixelated" }} />
                 </div>
                 <h3 className="text-xl font-bold text-sky-300">Gameplay Info</h3>
               </div>
@@ -473,7 +386,8 @@ export default function Home() {
             <div className="rounded-xl border-2 border-orange-500 bg-[#1a0900] shadow-[0_0_50px_rgba(249,115,22,0.25)] overflow-hidden flex flex-col">
               <div className="bg-orange-900/50 px-6 py-5 flex items-center gap-4">
                 <div className="p-2.5 rounded-lg bg-orange-800/80 ring-2 ring-orange-400/60 shrink-0">
-                  <ShieldIcon className="w-8 h-8 text-orange-300" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/sword.png" alt="sword" width={40} height={40} style={{ imageRendering: "pixelated" }} />
                 </div>
                 <h3 className="text-xl font-bold text-orange-300">Combat</h3>
               </div>
@@ -501,7 +415,8 @@ export default function Home() {
             <div className="rounded-xl border-2 border-red-600 bg-[#1a0000] shadow-[0_0_50px_rgba(239,68,68,0.25)] overflow-hidden flex flex-col">
               <div className="bg-red-900/50 px-6 py-5 flex items-center gap-4">
                 <div className="p-2.5 rounded-lg bg-red-800/80 ring-2 ring-red-400/60 shrink-0">
-                  <BarrierIcon className="w-8 h-8 text-red-300" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/barrier.png" alt="barrier" width={40} height={40} style={{ imageRendering: "pixelated" }} />
                 </div>
                 <h3 className="text-xl font-bold text-red-300">Disclaimer</h3>
               </div>
@@ -535,8 +450,11 @@ export default function Home() {
           {/* One Last Thing */}
           <div className="rounded-lg border border-[#1a3a1a] bg-[#0b120b] p-8 text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-2xl">⛏️</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/grass.png" alt="grass block" width={40} height={40} style={{ imageRendering: "pixelated" }} />
               <h3 className="text-xl font-bold text-white">One Last Thing!</h3>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/grass.png" alt="grass block" width={40} height={40} style={{ imageRendering: "pixelated" }} />
             </div>
             <p className="text-zinc-400 leading-relaxed max-w-3xl mx-auto text-sm">
               Truly Survival is a spiritual successor to many servers before it, pulling inspiration

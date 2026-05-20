@@ -3,6 +3,13 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
+const TIER_STYLE: Record<string, { label: string; color: string }> = {
+  free:      { label: "Free",  color: "text-zinc-500" },
+  basic:     { label: "Basic", color: "text-amber-300" },
+  true:      { label: "True",  color: "text-emerald-300" },
+  true_plus: { label: "True+", color: "text-violet-300" },
+};
+
 export function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
@@ -76,6 +83,13 @@ export function Navbar() {
 
             {open && (
               <div className="absolute right-0 mt-2 w-44 rounded-lg border border-[#1a3a1a] bg-[#0b120b] shadow-xl overflow-hidden">
+                {/* Rank badge */}
+                <div className="px-4 py-2.5 border-b border-[#1a3a1a]">
+                  <div className="text-xs text-zinc-600 mb-0.5">Rank</div>
+                  <div className={`text-sm font-bold ${TIER_STYLE[session.user.tier ?? "free"]?.color ?? "text-zinc-500"}`}>
+                    {TIER_STYLE[session.user.tier ?? "free"]?.label ?? "Free"}
+                  </div>
+                </div>
                 <Link
                   href="/dashboard"
                   onClick={() => setOpen(false)}
