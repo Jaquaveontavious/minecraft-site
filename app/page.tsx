@@ -42,25 +42,98 @@ function FeatureGroup({
   );
 }
 
-function InfoCard({
-  icon,
-  title,
-  children,
-}: {
-  icon: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+// ── Minecraft pixel-art style icons ──────────────────────────
+
+function SwordIcon({ className }: { className?: string }) {
   return (
-    <div className="rounded-lg border border-[#1a3a1a] bg-[#0b120b] p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-2xl">{icon}</span>
-        <h3 className="text-lg font-bold text-white">{title}</h3>
-      </div>
-      <div className="text-zinc-400 text-sm leading-relaxed space-y-2">{children}</div>
-    </div>
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
+      {/* tip */}
+      <rect x="1" y="0" width="2" height="2" />
+      {/* blade */}
+      <rect x="2" y="2" width="2" height="2" />
+      <rect x="3" y="4" width="2" height="2" />
+      <rect x="4" y="6" width="2" height="2" />
+      {/* crossguard */}
+      <rect x="1" y="7" width="8" height="2" />
+      {/* handle */}
+      <rect x="7" y="9" width="2" height="2" />
+      <rect x="8" y="11" width="2" height="2" />
+      {/* pommel */}
+      <rect x="9" y="13" width="3" height="3" />
+    </svg>
   );
 }
+
+function BookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
+      {/* spine */}
+      <rect x="6" y="0" width="2" height="16" />
+      {/* left page */}
+      <rect x="1" y="1" width="5" height="14" />
+      {/* right page */}
+      <rect x="8" y="1" width="5" height="14" />
+      {/* lines on left page */}
+      <rect x="2" y="4" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="2" y="6" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="2" y="8" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="2" y="10" width="2" height="1" fill="currentColor" opacity="0.4" />
+      {/* lines on right page */}
+      <rect x="9" y="4" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="9" y="6" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="9" y="8" width="3" height="1" fill="currentColor" opacity="0.4" />
+      <rect x="9" y="10" width="2" height="1" fill="currentColor" opacity="0.4" />
+    </svg>
+  );
+}
+
+function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
+      {/* top-left corner */}
+      <rect x="2" y="0" width="5" height="2" />
+      <rect x="0" y="2" width="2" height="4" />
+      {/* top-right corner */}
+      <rect x="9" y="0" width="5" height="2" />
+      <rect x="14" y="2" width="2" height="4" />
+      {/* body */}
+      <rect x="0" y="6" width="16" height="4" />
+      {/* taper */}
+      <rect x="1" y="10" width="14" height="2" />
+      <rect x="3" y="12" width="10" height="2" />
+      <rect x="6" y="14" width="4" height="2" />
+      {/* center stripe */}
+      <rect x="7" y="2" width="2" height="8" opacity="0.35" />
+    </svg>
+  );
+}
+
+function BarrierIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" style={{ imageRendering: "pixelated" }}>
+      {/* outer ring */}
+      <rect x="4" y="0" width="8" height="2" />
+      <rect x="0" y="4" width="2" height="8" />
+      <rect x="14" y="4" width="2" height="8" />
+      <rect x="4" y="14" width="8" height="2" />
+      <rect x="2" y="2" width="2" height="2" />
+      <rect x="12" y="2" width="2" height="2" />
+      <rect x="2" y="12" width="2" height="2" />
+      <rect x="12" y="12" width="2" height="2" />
+      {/* X */}
+      <rect x="4" y="4" width="2" height="2" />
+      <rect x="6" y="6" width="2" height="2" />
+      <rect x="8" y="8" width="2" height="2" />
+      <rect x="10" y="10" width="2" height="2" />
+      <rect x="10" y="4" width="2" height="2" />
+      <rect x="8" y="6" width="2" height="2" />
+      <rect x="6" y="8" width="2" height="2" />
+      <rect x="4" y="10" width="2" height="2" />
+    </svg>
+  );
+}
+
+// InfoCard is inlined per-card below to ensure Tailwind picks up all classes
 
 export default function Home() {
   return (
@@ -244,12 +317,15 @@ export default function Home() {
             </div>
 
             {/* ── True+ ── */}
-            <div className="rounded-lg border border-violet-800/50 bg-[#0a0512] overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-violet-800/30 bg-gradient-to-br from-violet-950/50 to-transparent">
-                <div className="text-violet-500/70 text-xs font-mono uppercase tracking-widest mb-1">
+            <div className="relative rounded-lg border-2 border-violet-400 bg-[#0a0512] overflow-hidden flex flex-col shadow-[0_0_70px_rgba(167,139,250,0.35),inset_0_0_50px_rgba(167,139,250,0.05)]">
+              <div className="absolute top-0 right-0 bg-violet-500 text-white text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-bl">
+                Exclusive
+              </div>
+              <div className="p-6 border-b border-violet-700/30 bg-gradient-to-br from-violet-950/60 to-transparent">
+                <div className="text-violet-400/80 text-xs font-mono uppercase tracking-widest mb-1">
                   Tier III
                 </div>
-                <div className="text-2xl font-bold text-violet-300">True+</div>
+                <div className="text-2xl font-bold text-violet-200">True+</div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-black text-white">$9.99</span>
                   <span className="text-zinc-500 text-sm">/month</span>
@@ -345,72 +421,115 @@ export default function Home() {
           </div>
 
           {/* Info cards grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-            <InfoCard icon="⚔️" title="Frequent Events">
-              <p>
-                Whether it be PvP, parkour, build competitions, or any minigame the community wants,
-                it's happening. Consistent events are something players on Truly Survival can look
-                forward to participating in.
-              </p>
-            </InfoCard>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
-            <InfoCard icon="📑" title="Gameplay Info">
-              <ul className="space-y-1.5">
-                {[
-                  "Mostly Vanilla gameplay with slight QOL tweaks",
-                  "/tpa and /sethome for traveling long distances, with a cooldown",
-                  "/teams for groups trying to work together",
-                  "Smaller world border (50k–200k) to encourage player interaction",
-                  "No whitelist — everybody can experience Truly Survival",
-                  "No lifesteal, economy, or other game-changing mechanics",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-green-600 mt-0.5 shrink-0">›</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </InfoCard>
+            {/* ── Events ── amber/gold ── */}
+            <div className="rounded-xl border-2 border-amber-500 bg-[#1a1100] shadow-[0_0_50px_rgba(245,158,11,0.25)] overflow-hidden flex flex-col">
+              <div className="bg-amber-900/50 px-6 py-5 flex items-center gap-4">
+                <div className="p-2.5 rounded-lg bg-amber-800/80 ring-2 ring-amber-400/60 shrink-0">
+                  <SwordIcon className="w-8 h-8 text-amber-300" />
+                </div>
+                <h3 className="text-xl font-bold text-amber-300">Frequent Events</h3>
+              </div>
+              <div className="h-px bg-amber-600/40" />
+              <div className="px-6 py-5 text-zinc-300 text-sm leading-relaxed">
+                <p>
+                  Whether it be PvP, parkour, build competitions, or any minigame the community
+                  wants, it&apos;s happening. Consistent events are something players on Truly
+                  Survival can look forward to participating in.
+                </p>
+              </div>
+            </div>
 
-            <InfoCard icon="🛡️" title="Combat">
-              <ul className="space-y-1.5">
-                {[
-                  "Balanced PvP for ALL playstyles, no matter your preferred style of combat",
-                  "Mace and Explosion-based PvP disabled in the Overworld — fully allowed in the Nether & End",
-                  "Combat Log Punishment — players who flee mid-fight are killed",
-                  "Intuitive Duels system with preset kits, separate from the survival world",
-                  "Place bets and wager on yours or other people's fights",
-                  "Leaderboards for kills/duel wins — display only, no gameplay impact",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-green-600 mt-0.5 shrink-0">›</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </InfoCard>
+            {/* ── Gameplay Info ── sky blue ── */}
+            <div className="rounded-xl border-2 border-sky-500 bg-[#00111a] shadow-[0_0_50px_rgba(14,165,233,0.25)] overflow-hidden flex flex-col">
+              <div className="bg-sky-900/50 px-6 py-5 flex items-center gap-4">
+                <div className="p-2.5 rounded-lg bg-sky-800/80 ring-2 ring-sky-400/60 shrink-0">
+                  <BookIcon className="w-8 h-8 text-sky-300" />
+                </div>
+                <h3 className="text-xl font-bold text-sky-300">Gameplay Info</h3>
+              </div>
+              <div className="h-px bg-sky-600/40" />
+              <div className="px-6 py-5 text-zinc-300 text-sm leading-relaxed">
+                <ul className="space-y-2">
+                  {[
+                    "Mostly Vanilla gameplay with slight QOL tweaks",
+                    "/tpa and /sethome for traveling long distances, with a cooldown",
+                    "/teams for groups trying to work together",
+                    "Smaller world border (50k–200k) to encourage player interaction",
+                    "No whitelist — everybody can experience Truly Survival",
+                    "No lifesteal, economy, or other game-changing mechanics",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-sky-400 mt-0.5 shrink-0 font-bold">›</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
-            <InfoCard icon="❌" title="Disclaimer">
-              <p className="mb-3">
-                Raiding, stealing, killing, and starting conflicts{" "}
-                <span className="text-white font-semibold">ARE</span> all allowed, but griefing
-                builds and killing pets are <span className="text-red-400 font-semibold">NOT</span>.
-              </p>
-              <ul className="space-y-1.5">
-                {[
-                  "You CAN destroy farms — these are tools, not creations",
-                  "Actual builds, pets, and meaningful creations are protected",
-                  "Violating these guidelines can result in temporary or permanent bans",
-                  "Hacking, exploiting, or cheating in any form results in a hasty ban",
-                  "Staff have final say in all scenarios — discretion is advised",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-red-500/70 mt-0.5 shrink-0">›</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </InfoCard>
+            {/* ── Combat ── orange ── */}
+            <div className="rounded-xl border-2 border-orange-500 bg-[#1a0900] shadow-[0_0_50px_rgba(249,115,22,0.25)] overflow-hidden flex flex-col">
+              <div className="bg-orange-900/50 px-6 py-5 flex items-center gap-4">
+                <div className="p-2.5 rounded-lg bg-orange-800/80 ring-2 ring-orange-400/60 shrink-0">
+                  <ShieldIcon className="w-8 h-8 text-orange-300" />
+                </div>
+                <h3 className="text-xl font-bold text-orange-300">Combat</h3>
+              </div>
+              <div className="h-px bg-orange-600/40" />
+              <div className="px-6 py-5 text-zinc-300 text-sm leading-relaxed">
+                <ul className="space-y-2">
+                  {[
+                    "Balanced PvP for ALL playstyles, no matter your preferred style of combat",
+                    "Mace and Explosion-based PvP disabled in the Overworld — fully allowed in the Nether & End",
+                    "Combat Log Punishment — players who flee mid-fight are killed",
+                    "Intuitive Duels system with preset kits, separate from the survival world",
+                    "Place bets and wager on yours or other people's fights",
+                    "Leaderboards for kills/duel wins — display only, no gameplay impact",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-orange-400 mt-0.5 shrink-0 font-bold">›</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* ── Disclaimer ── red ── */}
+            <div className="rounded-xl border-2 border-red-600 bg-[#1a0000] shadow-[0_0_50px_rgba(239,68,68,0.25)] overflow-hidden flex flex-col">
+              <div className="bg-red-900/50 px-6 py-5 flex items-center gap-4">
+                <div className="p-2.5 rounded-lg bg-red-800/80 ring-2 ring-red-400/60 shrink-0">
+                  <BarrierIcon className="w-8 h-8 text-red-300" />
+                </div>
+                <h3 className="text-xl font-bold text-red-300">Disclaimer</h3>
+              </div>
+              <div className="h-px bg-red-600/40" />
+              <div className="px-6 py-5 text-zinc-300 text-sm leading-relaxed space-y-3">
+                <p>
+                  Raiding, stealing, killing, and starting conflicts{" "}
+                  <span className="text-white font-semibold">ARE</span> all allowed, but griefing
+                  builds and killing pets are{" "}
+                  <span className="text-red-400 font-semibold">NOT</span>.
+                </p>
+                <ul className="space-y-2">
+                  {[
+                    "You CAN destroy farms — these are tools, not creations",
+                    "Actual builds, pets, and meaningful creations are protected",
+                    "Violating these guidelines can result in temporary or permanent bans",
+                    "Hacking, exploiting, or cheating in any form results in a hasty ban",
+                    "Staff have final say in all scenarios — discretion is advised",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-red-400 mt-0.5 shrink-0 font-bold">›</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
           </div>
 
           {/* One Last Thing */}
