@@ -1,5 +1,8 @@
 import Stripe from "stripe";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@/lib/supabase";
+import type { Tier } from "@/lib/database.types";
+import { assignRankRole, revokeTruePlus } from "@/lib/discord";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -69,46 +72,63 @@ export async function POST(request: NextRequest) {
   return new Response(null, { status: 200 });
 }
 
+async function setUserTier(discordId: string, tier: Tier) {
+  const supabase = createServerClient();
+  const { error } = await supabase
+    .from("users")
+    .update({ tier })
+    .eq("discord_id", discordId);
+  if (error) {
+    console.error(`Failed to set tier ${tier} for ${discordId}:`, error.message);
+    throw error;
+  }
+  console.log(`Set tier=${tier} for discord_id=${discordId}`);
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const rank = session.metadata?.rank;
-  const minecraftUsername = session.metadata?.minecraft_username;
+  const tier = session.metadata?.tier;
+  const discordId = session.metadata?.discord_id ?? session.client_reference_id;
 
-  console.log(
-    `Purchase complete — rank: ${rank}, player: ${minecraftUsername}, customer: ${session.customer}`
-  );
+  if (!tier || !discordId) {
+    console.error("Missing tier or discord_id in checkout metadata");
+    return;
+  }
 
-  // TODO: grant the rank in-game via your server plugin's API or RCON
+  // For one-time purchases (basic, true) update immediately.
+  // For subscriptions (true_plus) the subscription.created event handles it,
+  // but we also update here as a belt-and-suspenders measure.
+  await setUserTier(discordId, tier as Tier);
+  await assignRankRole(discordId, tier);
 }
 
 async function handleSubscriptionChange(subscription: Stripe.Subscription) {
-  const rank = subscription.metadata?.rank;
-  const minecraftUsername = subscription.metadata?.minecraft_username;
-  const status = subscription.status;
+  const discordId = subscription.metadata?.discord_id;
+  if (!discordId) return;
 
-  console.log(
-    `Subscription ${status} — rank: ${rank}, player: ${minecraftUsername}, sub: ${subscription.id}`
-  );
+  const activeStatuses = ["active", "trialing"];
+  const isActive = activeStatuses.includes(subscription.status);
 
-  // TODO: update the player's rank based on subscription.status
-  // Active statuses: "active", "trialing"
-  // Inactive statuses: "past_due", "unpaid", "canceled", "paused"
+  if (isActive) {
+    await setUserTier(discordId, "true_plus");
+    await assignRankRole(discordId, "true_plus");
+  } else {
+    // Lapsed payment — revert to True (they still own True)
+    await setUserTier(discordId, "true");
+    await revokeTruePlus(discordId);
+    console.log(`Subscription ${subscription.status} — reverted ${discordId} to true`);
+  }
 }
 
 async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
-  const rank = subscription.metadata?.rank;
-  const minecraftUsername = subscription.metadata?.minecraft_username;
-
-  console.log(
-    `Subscription cancelled — rank: ${rank}, player: ${minecraftUsername}, sub: ${subscription.id}`
-  );
-
-  // TODO: remove True+ rank from the player in-game
+  const discordId = subscription.metadata?.discord_id;
+  if (!discordId) return;
+  // Subscription fully cancelled — drop back to True rank
+  await setUserTier(discordId, "true");
+  await revokeTruePlus(discordId);
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  console.log(
-    `Payment failed — customer: ${invoice.customer}, invoice: ${invoice.id}`
-  );
-
-  // TODO: notify the player and/or suspend True+ until payment succeeds
+  // Stripe will retry and fire subscription.updated with status "past_due",
+  // which handleSubscriptionChange already handles.
+  console.log(`Payment failed — customer: ${invoice.customer}, invoice: ${invoice.id}`);
 }

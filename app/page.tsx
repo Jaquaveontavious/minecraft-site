@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { PurchaseButton } from "@/components/PurchaseButton";
 
 const SERVER_IP = "play.trulysurvival.net";
 const DISCORD_URL = "https://discord.gg/w38F5Nfj";
@@ -157,12 +158,11 @@ export default function Home() {
               </div>
 
               <div className="p-6 pt-0">
-                <a
-                  href="#"
+                <PurchaseButton
+                  tier="basic"
+                  label="Purchase Basic"
                   className="block w-full text-center py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm uppercase tracking-widest transition-colors"
-                >
-                  Purchase Basic
-                </a>
+                />
               </div>
             </div>
 
@@ -216,12 +216,11 @@ export default function Home() {
               </div>
 
               <div className="p-6 pt-0">
-                <a
-                  href="#"
+                <PurchaseButton
+                  tier="true"
+                  label="Purchase True"
                   className="block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm uppercase tracking-widest transition-colors shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_35px_rgba(52,211,153,0.45)]"
-                >
-                  Purchase True
-                </a>
+                />
               </div>
             </div>
 
@@ -289,12 +288,11 @@ export default function Home() {
               </div>
 
               <div className="p-6 pt-0">
-                <a
-                  href="#"
+                <PurchaseButton
+                  tier="true_plus"
+                  label="Purchase True+"
                   className="block w-full text-center py-3 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm uppercase tracking-widest transition-colors"
-                >
-                  Purchase True+
-                </a>
+                />
                 <p className="text-center text-xs text-zinc-600 mt-2">
                   Must already own True rank
                 </p>
