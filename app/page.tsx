@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { PurchaseButton } from "@/components/PurchaseButton";
 
-const SERVER_IP = "play.trulysurvival.net";
+const SERVER_IP = "play.trulysurvival.com";
 const DISCORD_URL = "https://discord.gg/w38F5Nfj";
 
 function Divider({ color }: { color: string }) {
