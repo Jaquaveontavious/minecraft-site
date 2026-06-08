@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import type { Tier } from "@/lib/database.types";
 import { assignRankRole, revokeTruePlus } from "@/lib/discord";
+import { grantRank, revokeRank } from "@/lib/rcon";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -72,17 +73,87 @@ export async function POST(request: NextRequest) {
   return new Response(null, { status: 200 });
 }
 
-async function setUserTier(discordId: string, tier: Tier) {
+const PRICE_IDS: Record<Exclude<Tier, "free">, string> = {
+  basic: "price_1TZGrUK05XOyl34oX2Ua0Ecp",
+  true: "price_1TZGshK05XOyl34ouCuXxgaZ",
+  true_plus: "price_1TZGtBK05XOyl34osSHPFys4",
+};
+
+async function setUserTier(discordId: string, tier: Tier): Promise<string | null> {
   const supabase = createServerClient();
-  const { error } = await supabase
+
+  const { data: updated, error: updateError } = await supabase
     .from("users")
     .update({ tier })
-    .eq("discord_id", discordId);
-  if (error) {
-    console.error(`Failed to set tier ${tier} for ${discordId}:`, error.message);
-    throw error;
+    .eq("discord_id", discordId)
+    .select("minecraft_username")
+    .maybeSingle();
+
+  if (updateError) {
+    console.error(`Failed to set tier ${tier} for ${discordId}:`, updateError.message);
+    throw updateError;
   }
-  console.log(`Set tier=${tier} for discord_id=${discordId}`);
+
+  if (updated) {
+    console.log(`Set tier=${tier} for discord_id=${discordId}`);
+    return updated.minecraft_username ?? null;
+  }
+
+  // Fallback: user row missing (shouldn't happen if they logged in before checkout)
+  const { data: inserted, error: insertError } = await supabase
+    .from("users")
+    .insert({
+      discord_id: discordId,
+      discord_username: `discord_${discordId}`,
+      tier,
+    })
+    .select("minecraft_username")
+    .single();
+
+  if (insertError) {
+    console.error(`Failed to create user for ${discordId}:`, insertError.message);
+    throw insertError;
+  }
+
+  console.log(`Created user and set tier=${tier} for discord_id=${discordId}`);
+  return inserted.minecraft_username ?? null;
+}
+
+async function recordPurchase(
+  discordId: string,
+  tier: Exclude<Tier, "free">,
+  session: Stripe.Checkout.Session
+) {
+  const supabase = createServerClient();
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id")
+    .eq("discord_id", discordId)
+    .single();
+
+  if (userError || !user) {
+    console.error(`Cannot record purchase — user not found for ${discordId}`);
+    return;
+  }
+
+  const customerId =
+    typeof session.customer === "string" ? session.customer : session.customer?.id;
+  if (!customerId) {
+    console.error("Cannot record purchase — missing Stripe customer id");
+    return;
+  }
+
+  const { error } = await supabase.from("purchases").insert({
+    user_id: user.id,
+    tier,
+    stripe_customer_id: customerId,
+    stripe_price_id: PRICE_IDS[tier],
+    status: "active",
+  });
+
+  if (error) {
+    console.error(`Failed to record purchase for ${discordId}:`, error.message);
+  }
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
@@ -94,11 +165,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // For one-time purchases (basic, true) update immediately.
-  // For subscriptions (true_plus) the subscription.created event handles it,
-  // but we also update here as a belt-and-suspenders measure.
-  await setUserTier(discordId, tier as Tier);
+  const paidTier = tier as Exclude<Tier, "free">;
+
+  const minecraftUsername = await setUserTier(discordId, paidTier);
+  await recordPurchase(discordId, paidTier, session);
   await assignRankRole(discordId, tier);
+  if (minecraftUsername) {
+    await grantRank(minecraftUsername, tier);
+  } else {
+    console.warn(`No Minecraft username for ${discordId} — skipping RCON rank grant`);
+  }
 }
 
 async function handleSubscriptionChange(subscription: Stripe.Subscription) {
@@ -109,12 +185,14 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const isActive = activeStatuses.includes(subscription.status);
 
   if (isActive) {
-    await setUserTier(discordId, "true_plus");
+    const minecraftUsername = await setUserTier(discordId, "true_plus");
     await assignRankRole(discordId, "true_plus");
+    if (minecraftUsername) await grantRank(minecraftUsername, "true_plus");
   } else {
     // Lapsed payment — revert to True (they still own True)
-    await setUserTier(discordId, "true");
+    const minecraftUsername = await setUserTier(discordId, "true");
     await revokeTruePlus(discordId);
+    if (minecraftUsername) await revokeRank(minecraftUsername, "true_plus");
     console.log(`Subscription ${subscription.status} — reverted ${discordId} to true`);
   }
 }
@@ -123,8 +201,9 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
   const discordId = subscription.metadata?.discord_id;
   if (!discordId) return;
   // Subscription fully cancelled — drop back to True rank
-  await setUserTier(discordId, "true");
+  const minecraftUsername = await setUserTier(discordId, "true");
   await revokeTruePlus(discordId);
+  if (minecraftUsername) await revokeRank(minecraftUsername, "true_plus");
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {

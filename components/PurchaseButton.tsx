@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useSession, signIn } from "next-auth/react";
 import { useState } from "react";
 
@@ -31,6 +31,16 @@ export function PurchaseButton({ tier, label, className }: Props) {
 
       if (res.status === 403) {
         setError("You need True rank first.");
+        return;
+      }
+
+      if (res.status === 400) {
+        const text = await res.text();
+        setError(
+          text.includes("Minecraft username")
+            ? "Set your Minecraft username on the dashboard first."
+            : text || "Invalid request."
+        );
         return;
       }
 

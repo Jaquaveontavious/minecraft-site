@@ -1,4 +1,5 @@
-﻿import { auth } from "@/auth";
+import { auth } from "@/auth";
+import { createServerClient } from "@/lib/supabase";
 import Stripe from "stripe";
 import type { NextRequest } from "next/server";
 
@@ -37,6 +38,25 @@ export async function POST(request: NextRequest) {
   // True+ requires True rank first
   if (tier === "true_plus" && session.user.tier !== "true") {
     return new Response("True+ requires True rank", { status: 403 });
+  }
+
+  const supabase = createServerClient();
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("minecraft_username")
+    .eq("discord_id", session.user.discordId)
+    .single();
+
+  if (userError) {
+    console.error("Failed to fetch user for checkout:", userError.message);
+    return new Response("Database error", { status: 500 });
+  }
+
+  if (!user?.minecraft_username?.trim()) {
+    return new Response(
+      "Set your Minecraft username on the dashboard before purchasing",
+      { status: 400 }
+    );
   }
 
   const stripe = getStripe();

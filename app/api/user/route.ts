@@ -1,4 +1,4 @@
-﻿import { auth } from "@/auth";
+import { auth } from "@/auth";
 import { createServerClient } from "@/lib/supabase";
 import { grantRank } from "@/lib/rcon";
 import type { NextRequest } from "next/server";
@@ -52,15 +52,23 @@ export async function PATCH(request: NextRequest) {
     return new Response("Database error", { status: 500 });
   }
 
+  let rankSynced = false;
+  let rankSyncError: string | null = null;
+
   // If the user already has a paid rank, grant it in-game now that we have their username
   if (user?.tier && PAID_TIERS.includes(user.tier)) {
     try {
       await grantRank(username, user.tier);
+      rankSynced = true;
     } catch (err) {
-      // Don't fail the request — username is saved, RCON is best-effort
-      console.error("RCON grant failed after username set:", err);
+      rankSyncError = err instanceof Error ? err.message : "RCON failed";
+      console.error("RCON grant failed after username set:", rankSyncError);
     }
   }
 
-  return new Response(null, { status: 204 });
+  return Response.json({
+    minecraft_username: username,
+    rank_synced: rankSynced,
+    rank_sync_error: rankSyncError,
+  });
 }

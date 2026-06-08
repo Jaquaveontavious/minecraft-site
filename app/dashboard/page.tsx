@@ -1,8 +1,29 @@
-﻿import { auth } from "@/auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase";
 import { Navbar } from "@/components/Navbar";
+import { MinecraftUsernameForm } from "@/components/MinecraftUsernameForm";
+import { SyncRankButton } from "@/components/SyncRankButton";
+import { PurchaseSuccessBanner } from "@/components/PurchaseSuccessBanner";
+import { reconcileTierFromStripe } from "@/lib/stripe-reconcile";
 import type { Tier, PurchaseStatus } from "@/lib/database.types";
+
+export const dynamic = "force-dynamic";
+
+const TIER_RANK: Record<Tier, number> = {
+  free: 0,
+  basic: 1,
+  true: 2,
+  true_plus: 3,
+};
+
+function highestTier(current: Tier, candidates: Tier[]): Tier {
+  return candidates.reduce<Tier>(
+    (best, tier) => (TIER_RANK[tier] > TIER_RANK[best] ? tier : best),
+    current
+  );
+}
 
 const TIER_META: Record<Tier, { label: string; color: string; bg: string; border: string; price: string }> = {
   free:      { label: "Free",   color: "text-zinc-400",   bg: "bg-zinc-900",    border: "border-zinc-700",    price: "" },
@@ -38,14 +59,40 @@ export default async function DashboardPage() {
     .eq("user_id", user?.id ?? "")
     .order("created_at", { ascending: false });
 
-  const tier: Tier = user?.tier ?? "free";
+  let tier: Tier = user?.tier ?? "free";
+
+  // Self-heal from purchase records
+  const purchaseTiers = (purchases ?? [])
+    .filter((p) => p.status === "active" || p.status === "trialing")
+    .map((p) => p.tier as Tier);
+  let reconciledTier = highestTier(tier, purchaseTiers);
+
+  // Self-heal from Stripe if tier is still free (webhook may have missed the DB update)
+  if (reconciledTier === "free") {
+    const stripeTier = await reconcileTierFromStripe(session.user.discordId);
+    if (stripeTier) reconciledTier = stripeTier;
+  }
+
+  if (user && reconciledTier !== tier) {
+    await supabase
+      .from("users")
+      .update({ tier: reconciledTier })
+      .eq("discord_id", session.user.discordId);
+    tier = reconciledTier;
+  }
+
   const tierMeta = TIER_META[tier];
+  const hasPaidRank = tier !== "free";
 
   return (
     <div className="min-h-screen bg-[#080d08]">
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 pt-28 pb-20">
+        <Suspense>
+          <PurchaseSuccessBanner />
+        </Suspense>
+
         {/* ── Profile card ── */}
         <div className="flex items-center gap-5 mb-10">
           {session.user.image ? (
@@ -85,6 +132,47 @@ export default async function DashboardPage() {
               >
                 Upgrade
               </a>
+            )}
+          </div>
+        </section>
+
+        {/* ── Minecraft username ── */}
+        <section className="mb-8">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-3">Minecraft Username</h2>
+          <div className="rounded-lg border border-emerald-900/40 bg-[#0b120b] p-5">
+            {hasPaidRank && !user?.minecraft_username && (
+              <p className="text-amber-400 text-sm mb-3">
+                You have a paid rank but no Minecraft username saved. Add it below, then sync your in-game rank.
+              </p>
+            )}
+            {!hasPaidRank && (
+              <p className="text-zinc-500 text-sm mb-3">
+                Save your Minecraft username here before purchasing a rank.
+              </p>
+            )}
+            <p className="text-zinc-500 text-sm mb-3">
+              Required for in-game rank grants. Must match your exact Minecraft username (case-insensitive).
+            </p>
+            <MinecraftUsernameForm current={user?.minecraft_username ?? null} />
+            {hasPaidRank && (
+              <div className="mt-4 pt-4 border-t border-[#1a3a1a]">
+                <p className="text-zinc-500 text-sm mb-3">
+                  {user?.minecraft_username
+                    ? "Discord rank is active. Use this if your in-game LuckPerms group is missing."
+                    : "Save your username above to unlock in-game rank sync."}
+                </p>
+                {user?.minecraft_username ? (
+                  <SyncRankButton tier={tier} />
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-4 py-2 bg-zinc-800 text-zinc-500 text-sm font-semibold rounded cursor-not-allowed"
+                  >
+                    Sync In-Game Rank
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </section>

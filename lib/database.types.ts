@@ -17,6 +17,7 @@ export type Database = {
           discord_id: string;
           discord_username: string;
           discord_avatar: string | null;
+          minecraft_username: string | null;
           tier: Tier;
           created_at: string;
           updated_at: string;
@@ -26,6 +27,7 @@ export type Database = {
           discord_id: string;
           discord_username: string;
           discord_avatar?: string | null;
+          minecraft_username?: string | null;
           tier?: Tier;
           created_at?: string;
           updated_at?: string;
@@ -33,6 +35,7 @@ export type Database = {
         Update: {
           discord_username?: string;
           discord_avatar?: string | null;
+          minecraft_username?: string | null;
           tier?: Tier;
           updated_at?: string;
         };

@@ -57,20 +57,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
 
-    // Persist discordId into the JWT on first sign-in
     async jwt({ token, account, profile }) {
       if (account?.provider === "discord" && profile) {
-        const discordProfile = profile as unknown as DiscordProfile;
-        token.discordId = discordProfile.id;
+        token.discordId = (profile as unknown as DiscordProfile).id;
+      }
 
+      // Always read the latest tier from the database (not just on first login)
+      if (token.discordId) {
         const supabase = createServerClient();
         const { data } = await supabase
           .from("users")
           .select("tier")
-          .eq("discord_id", discordProfile.id)
-          .single();
+          .eq("discord_id", token.discordId as string)
+          .maybeSingle();
         token.tier = data?.tier ?? "free";
       }
+
       return token;
     },
 
