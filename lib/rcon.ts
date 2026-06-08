@@ -7,25 +7,66 @@ const LP_GROUPS = {
   true_plus: process.env.LP_GROUP_TRUE_PLUS ?? "true_plus",
 } as const;
 
-function getRconConfig() {
-  const password = process.env.RCON_PASSWORD;
-  if (!password) throw new Error("RCON_PASSWORD is not set");
+function stripEnv(value: string | undefined): string | undefined {
+  return value?.trim().replace(/^["']|["']$/g, "");
+}
 
-  let host = process.env.RCON_HOST?.trim();
-  if (!host) throw new Error("RCON_HOST is not set");
+function parseHostAndPort(rawHost: string, rawPort: string | undefined) {
+  let host = rawHost;
+  let port = parseInt(rawPort ?? "25575", 10);
+  const portExplicitlySet = Boolean(rawPort?.trim());
 
-  let port = parseInt(process.env.RCON_PORT ?? "25575", 10);
-
-  // If host was set as "hostname:port", split them — port in hostname causes ENOTFOUND
-  const hostPortMatch = host.match(/^(.+):(\d+)$/);
-  if (hostPortMatch) {
-    host = hostPortMatch[1];
-    if (!process.env.RCON_PORT) {
-      port = parseInt(hostPortMatch[2], 10);
+  if (host.includes("://")) {
+    try {
+      const url = new URL(host);
+      host = url.hostname;
+      if (!portExplicitlySet && url.port) port = parseInt(url.port, 10);
+    } catch {
+      // fall through to host:port parsing
     }
   }
 
+  // host:port in RCON_HOST causes ENOTFOUND if not split (e.g. n-nyc-11.folium.host:25738)
+  const lastColon = host.lastIndexOf(":");
+  if (lastColon > 0 && /^\d+$/.test(host.slice(lastColon + 1))) {
+    if (!portExplicitlySet) port = parseInt(host.slice(lastColon + 1), 10);
+    host = host.slice(0, lastColon);
+  }
+
+  return { host, port };
+}
+
+function getRconConfig() {
+  const password = stripEnv(process.env.RCON_PASSWORD);
+  if (!password) throw new Error("RCON_PASSWORD is not set");
+
+  const rawHost = stripEnv(process.env.RCON_HOST);
+  if (!rawHost) throw new Error("RCON_HOST is not set");
+
+  const { host, port } = parseHostAndPort(rawHost, stripEnv(process.env.RCON_PORT));
   return { host, port, password };
+}
+
+function formatRconError(err: unknown, host: string, port: number): Error {
+  const detail = err instanceof Error ? err.message : String(err);
+
+  if (detail.includes("ENOTFOUND")) {
+    return new Error(
+      `Cannot resolve RCON host "${host}" (port ${port}). ` +
+        `In Vercel, set RCON_HOST to the hostname only and RCON_PORT separately — ` +
+        `e.g. RCON_HOST=n-nyc-11.folium.host and RCON_PORT=25738. ` +
+        `You can also try the server IP as RCON_HOST.`
+    );
+  }
+
+  if (detail.includes("ECONNREFUSED") || detail.includes("ETIMEDOUT")) {
+    return new Error(
+      `RCON connection to ${host}:${port} failed. ` +
+        `Check that RCON is enabled, the port is correct, and Folium allows external RCON connections.`
+    );
+  }
+
+  return err instanceof Error ? err : new Error(detail);
 }
 
 function normalizeUsername(minecraftUsername: string): string {
@@ -48,8 +89,15 @@ function assertLuckPermsSuccess(command: string, response: string): void {
 
 async function runCommand(command: string): Promise<string> {
   const config = getRconConfig();
+  console.log(`RCON connecting to ${config.host}:${config.port}`);
+
   const rcon = new Rcon(config);
-  await rcon.connect();
+  try {
+    await rcon.connect();
+  } catch (err) {
+    throw formatRconError(err, config.host, config.port);
+  }
+
   try {
     const response = await rcon.send(command);
     console.log(`RCON command: ${command} → ${response}`);
