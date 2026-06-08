@@ -8,14 +8,24 @@ const LP_GROUPS = {
 } as const;
 
 function getRconConfig() {
-  const host = process.env.RCON_HOST;
   const password = process.env.RCON_PASSWORD;
-  if (!host || !password) throw new Error("RCON_HOST or RCON_PASSWORD is not set");
-  return {
-    host,
-    port: parseInt(process.env.RCON_PORT ?? "25575"),
-    password,
-  };
+  if (!password) throw new Error("RCON_PASSWORD is not set");
+
+  let host = process.env.RCON_HOST?.trim();
+  if (!host) throw new Error("RCON_HOST is not set");
+
+  let port = parseInt(process.env.RCON_PORT ?? "25575", 10);
+
+  // If host was set as "hostname:port", split them — port in hostname causes ENOTFOUND
+  const hostPortMatch = host.match(/^(.+):(\d+)$/);
+  if (hostPortMatch) {
+    host = hostPortMatch[1];
+    if (!process.env.RCON_PORT) {
+      port = parseInt(hostPortMatch[2], 10);
+    }
+  }
+
+  return { host, port, password };
 }
 
 function normalizeUsername(minecraftUsername: string): string {
