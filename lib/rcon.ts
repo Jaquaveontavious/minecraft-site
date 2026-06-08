@@ -53,16 +53,29 @@ function formatRconError(err: unknown, host: string, port: number): Error {
   if (detail.includes("ENOTFOUND")) {
     return new Error(
       `Cannot resolve RCON host "${host}" (port ${port}). ` +
-        `In Vercel, set RCON_HOST to the hostname only and RCON_PORT separately — ` +
-        `e.g. RCON_HOST=n-nyc-11.folium.host and RCON_PORT=25738. ` +
-        `You can also try the server IP as RCON_HOST.`
+        `Set RCON_HOST to the hostname only and RCON_PORT separately in Vercel.`
+    );
+  }
+
+  if (detail.includes("Authentication failed")) {
+    return new Error(
+      `RCON authentication failed for ${host}:${port}. ` +
+        `The RCON_PASSWORD in Vercel must exactly match rcon.password in server.properties.`
+    );
+  }
+
+  if (detail.includes("Connection closed")) {
+    return new Error(
+      `RCON connection to ${host}:${port} was closed by the server. ` +
+        `Usually this means: (1) wrong RCON password, (2) wrong RCON port, or (3) enable-rcon=false in server.properties. ` +
+        `In Folium, check Network → Ports for your RCON port, set rcon.port to match in server.properties, enable-rcon=true, then restart the server.`
     );
   }
 
   if (detail.includes("ECONNREFUSED") || detail.includes("ETIMEDOUT")) {
     return new Error(
       `RCON connection to ${host}:${port} failed. ` +
-        `Check that RCON is enabled, the port is correct, and Folium allows external RCON connections.`
+        `Check that RCON is enabled and the port is open in Folium's port allocations.`
     );
   }
 
@@ -87,24 +100,50 @@ function assertLuckPermsSuccess(command: string, response: string): void {
   }
 }
 
+async function connectRcon(config: ReturnType<typeof getRconConfig>) {
+  const options = { ...config, timeout: 10_000, maxPending: 1 };
+  const maxAttempts = 2;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const rcon = await Rcon.connect(options);
+    try {
+      // Verify the session works before returning — auth alone isn't always enough
+      await rcon.send("list");
+      return rcon;
+    } catch (err) {
+      lastError = err;
+      try {
+        await rcon.end();
+      } catch {
+        // ignore cleanup errors
+      }
+      console.error(`RCON attempt ${attempt}/${maxAttempts} failed:`, err);
+      if (attempt === maxAttempts) break;
+    }
+  }
+
+  throw formatRconError(lastError, config.host, config.port);
+}
+
 async function runCommand(command: string): Promise<string> {
   const config = getRconConfig();
   console.log(`RCON connecting to ${config.host}:${config.port}`);
 
-  const rcon = new Rcon(config);
-  try {
-    await rcon.connect();
-  } catch (err) {
-    throw formatRconError(err, config.host, config.port);
-  }
-
+  const rcon = await connectRcon(config);
   try {
     const response = await rcon.send(command);
     console.log(`RCON command: ${command} → ${response}`);
     assertLuckPermsSuccess(command, response);
     return response;
+  } catch (err) {
+    throw formatRconError(err, config.host, config.port);
   } finally {
-    await rcon.end();
+    try {
+      await rcon.end();
+    } catch {
+      // ignore cleanup errors
+    }
   }
 }
 

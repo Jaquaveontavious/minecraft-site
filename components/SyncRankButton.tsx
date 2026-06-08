@@ -10,7 +10,14 @@ export function SyncRankButton({ tier }: { tier: string }) {
     setMessage(null);
 
     const res = await fetch("/api/user/sync-rank", { method: "POST" });
-    const data = await res.json().catch(() => ({}));
+    let errorMessage = "Sync failed. Check your username and try again.";
+    try {
+      const data = await res.json();
+      if (data.error) errorMessage = data.error;
+    } catch {
+      const text = await res.text().catch(() => "");
+      if (text) errorMessage = text;
+    }
 
     if (res.ok) {
       setStatus("ok");
@@ -21,7 +28,7 @@ export function SyncRankButton({ tier }: { tier: string }) {
       }, 5000);
     } else {
       setStatus("error");
-      setMessage(data.error ?? "Sync failed. Check your username and try again.");
+      setMessage(errorMessage);
       setTimeout(() => {
         setStatus("idle");
         setMessage(null);
